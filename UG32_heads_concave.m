@@ -28,7 +28,7 @@ clc
 unit_conversion;
 
 %% Parameters
-r = 0.1 * FROM_M_TO_INCHES;
+r = 0.05 * FROM_M_TO_INCHES;
 t = 4e-3 * FROM_M_TO_INCHES;
 Ri = 600e-3 * FROM_M_TO_INCHES;
 E = 0.95;

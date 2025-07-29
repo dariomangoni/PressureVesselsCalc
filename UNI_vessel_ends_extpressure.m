@@ -4,13 +4,15 @@ clc
 
 MaterialS235JR;
 
-ea = 5;
+ea = 4;
 Di = 1200;
 S_oper = 1.5; % operating conditions (8.4.4-1) 
 S_test = 1.1; % testing conditions (8.4.4-2)
 sigma_e = Rp02T; % (8.4.2-1)
 E = 210e3; % MPa, modulus of elasticity
-R = 0.9*Di;
+R = Di; % as Tommasin
+
+warning('Also vessel ends as intpressure must pass.')
 
 if 2.4*sqrt(ea*R)>1.3*R
     error('Expand formula with info contained in 8.7.2')
@@ -21,8 +23,8 @@ PrPy_PmPy_heads = [0, 0.5, 1, 1.5, 2, 2.5, 3.0, 3.5, 4, 4.5, 5.0, 5.5, 6, 6.5;
 0, 0.09, 0.18, 0.255, 0.324, 0.386, 0.435, 0.479, 0.51, 0.533, 0.548, 0.565, 0.567, 0.57]; % Figure 8.5-5
 
 
-Py = 2 * sigma_e * ea/R;
-Pm = 1.21*E*ea^2/R^2;
+Py = 2 * sigma_e * ea/R; %  (8.7.1-1)
+Pm = 1.21*E*ea^2/R^2; %  (8.7.1-2)
 
 Pm_Py = Pm/Py;
 assert(Pm_Py>=0, 'Out of plot range');

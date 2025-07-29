@@ -26,72 +26,89 @@ MaterialS235JR;
 
 mode = 'oper';
 Di = 1200;
-R = 0.9*Di;
-r = 100; % TO VERIFY
-P = 4/10; % pressure
+R = Di;
+r = 75; % TO VERIFY
+P = 1/10; % pressure
 f = fd;
 z = 0.85; % joint coefficient Table 5.6-1
+
+internal_pressure = true;
 
 
 assert(r <= 0.2*Di)
 assert(r >= 0.06*Di)
 
-e = 4;
-for iter = 1:20
 
+for mode_sel = 1:2
+    e = 4; % reset
 
-    De = Di + 2*e;
+    for iter = 1:20
     
+    
+        De = Di + 2*e;
+        
+    
+        assert(r >= 2*e)
+        assert(e <= 0.08*De)
+        assert(e >= 0.001*De)
+        assert(R >= 2*e)
+        
+        %% Design
+        
+        X = r/Di;
+        Y = min([e/R, 0.04]);
+        
 
-    assert(r >= 2*e)
-    assert(e <= 0.08*De)
-    assert(e >= 0.001*De)
-    assert(R >= 2*e)
+        if internal_pressure
+            N = 1.006 - 1/(6.2 + (90*Y)^4);
+        else
+            N = 1; % 8.8.2 Torispherical ends 
+        end
+
+        Z = log10(1/Y);
+        beta006 = N*(-0.3635*Z^3+2.2124*Z^2-3.2937*Z+1.8873);
+        beta010 = N*(-0.1833*Z^3+1.0383*Z^2-1.2943*Z+0.837);
+        beta020 = max([0.95*(0.56-1.94*Y-82.5*Y^2), 0.5]);
+        if X < 0.06
+            assert(false, 'X cannot be smaller than 0.06')
+        elseif X <= 0.06+1e-3
+            beta = beta006;
+        elseif X < 0.1
+            beta = 25*((0.1-X)*beta006 + (X-0.06)*beta010);
+        elseif X < 0.1+1e-3
+            beta = beta010;
+        elseif X < 0.2
+            beta = 10*((0.2-X)*beta010 + (X-0.1)*beta020);
+        elseif X <0.2+1e-3
+            beta = beta020;
+        else
+            assert(false, 'X cannot be greater than 0.2')
+        end
+
+        
+        es = P*R/(2*f*z - 0.5*P);
+        ey = beta*P*(0.75*R + 0.2*Di)/f;
+        if mode_sel == 1 % operating conditions
+            fb = Rp02T/1.5;
+        elseif mode_sel == 2 % testing conditions
+            fb = Rp02T/1.05;
+        else
+            error('Plese set ''mode'' appropriately')
+        end
+        eb = (0.75*R+0.2*Di) * (P/(111*fb)*(Di/r)^0.825)^(1/1.5);
+        
+        e_new = max([es, ey, eb]);
     
-    %% Design
     
-    X = r/Di;
-    Y = min([e/R, 0.04]);
+        if abs(e_new-e)<0.001
+            if mode_sel == 1 % operating conditions
+                disp(['Required thickness for pressure in operating conditions of ', num2str(P*10), ' bar: ', num2str(e), ' mm'])
+            elseif mode_sel == 2 % testing conditions
+                disp(['Required thickness for pressure in testing conditions of ', num2str(P*10), ' bar: ', num2str(e), ' mm'])
+            end
+            break
+        end
+        e = e_new;
     
-    N = 1.006 - 1/(6.2 + (90*Y)^4);
-    Z = log10(1/Y);
-    beta006 = N*(-0.3635*Z^3+2.2124*Z^2-3.2937*Z+1.8873);
-    beta010 = N*(-0.1833*Z^3+1.0383*Z^2-1.2943*Z+0.837);
-    beta020 = max([0.95*(0.56-1.94*Y-82.5*Y^2), 0.5]);
-    if X < 0.06
-        assert(false, 'X cannot be smaller than 0.06')
-    elseif X <= 0.06+1e-3
-        beta = beta006;
-    elseif X < 0.1
-        beta = 25*((0.1-X)*beta006 + (X-0.06)*beta010);
-    elseif X < 0.1+1e-3
-        beta = beta010;
-    elseif X < 0.2
-        beta = 10*((0.2-X)*beta010 + (X-0.1)*beta020);
-    elseif X <0.2+1e-3
-        beta = beta020;
-    else
-        assert(false, 'X cannot be greater than 0.2')
     end
-    
-    es = P*R/(2*f*z - 0.5*P);
-    ey = beta*P*(0.75*R + 0.2*Di)/f;
-    if matches(mode, 'oper')
-        fb = Rp02T/1.5;
-    elseif matches(mode, 'test')
-        fb = Rp02T/1.05;
-    else
-        error('Plese set ''mode'' appropriately')
-    end
-    eb = (0.75*R+0.2*Di) * (P/(111*fb)*(Di/r)^0.825)^(1/1.5);
-    
-    e_new = max([es, ey, eb]);
-
-
-    if abs(e_new-e)<0.001
-        disp(['Required thickness for internal pressure of ', num2str(P*10), ' bar: ', num2str(e), ' mm'])
-        break
-    end
-    e = e_new;
-
 end

@@ -2,7 +2,7 @@ clear
 close all
 clc
 
-%% Design by EN 13445-3 - Sec 8
+%% Design by EN 13445-3 - Clause 8
 
 % Rp02T: 0,2% proof strength at temperature T
 % sigma_e: % elastic limit for shell
@@ -15,7 +15,7 @@ S_test = 1.1; % testing conditions (8.4.4-2)
 ea = 4; % thickness in analysis
 R = 600; % mm, mean radius
 h = 192; % mm, height of the head
-Lcyl = 500; % length of cylinder (tangent-to-tangent)
+Lcyl = 400; % length of cylinder (tangent-to-tangent)
 E = 210e3; % MPa, modulus of elasticity
 nu = 0.3; % poisson
 
@@ -25,7 +25,7 @@ PrPy_PmPy_cylinders = [0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5,
 0, 0.125, 0.251, 0.375, 0.5, 0.605, 0.68, 0.72, 0.755, 0.78, 0.803, 0.822, 0.836, 0.849, 0.861, 0.87, 0.879, 0.887, 0.896, 0.905, 0.914, 0.917, 0.923, 0.929, 0.935, 0.941, 0.947, 0.953, 0.959];
 
 
-sigma_e = Rp02T; % (8.4.2-1)
+sigma_e = mat.Rp02T; % (8.4.2-1)
 
 L = Lcyl + 0.4*h; % (8.5.2-2) 
 Py = sigma_e*ea/R; % (8.5.2-4) 

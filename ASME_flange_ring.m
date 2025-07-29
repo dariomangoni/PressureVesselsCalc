@@ -112,7 +112,7 @@ bolt_torquing.tn_table = [0.7344, 0.8594, 0.9844, 1.1094, 1.2188, 1.3438, 1.4688
 %% Parameters
 % Flange
 D  = 1200e-3 * FROM_M_TO_INCHES; % inside diameter of cylinder, in.
-G = 1300e-3 * FROM_M_TO_INCHES; % diameter at gasket load reaction, in.
+G = 1250e-3 * FROM_M_TO_INCHES; % diameter at gasket load reaction, in.
 P = 6e5 * FROM_PA_TO_PSI; % design pressure, psi
 b = 10e-3 * FROM_M_TO_INCHES; % effective gasket width, in.
 Sa = 640e6 * FROM_PA_TO_PSI; % allowable stress, bolt, at ambient temperature, psi
@@ -137,7 +137,7 @@ assert(G>B, 'Gasket reactions diameter cannot be smaller than the flange inner d
 %% Ring Flange Design
 % m, y: from [Moss, Table 3-4, pag 167 PDF]
 Pe = 16*M/pi/G^3 + 4*Pr/pi/G^2 + P;
-m = 0;
+m = 0.25;
 y = 0;
 Hp = 2*b*pi*G*m*Pe;
 H = G.^2*pi*Pe/4;
@@ -150,7 +150,7 @@ Am = max([Wm2/Sa, Wm1/Sb]);
 n_tentative = round(D/4)*4; 
 Ra_tentative = Am/n_tentative;
 bolt_flange_id = find(bolt_flange.Ra_table>Ra_tentative, 1);
-bolt_flange_id = 5;
+bolt_flange_id = 4;
 assert(~isempty(bolt_flange_id), 'The bolt_flange table does not have a bolt so big.')
 Ra = bolt_flange.Ra_table(bolt_flange_id);
 n = round(ceil(Am/Ra)/4)*4; % always multiple of 4

@@ -9,18 +9,23 @@ bolt_id = 28; % (taken from UNI_flange.m)
 
 MaterialS235JR; % TO CHANGE WITH PROPER MATERIAL
 
-f = fd;
+f = mat.fd;
+fA = mat.fd;
 G = 1220; % gasket reaction diameter
 B = 1200;
 C = 1300; % bolt pitch circle
 A = 1400;
-w = 6;
+b = 6;
 P = 6/10;
 m = 0;
+nu = 0.3;
+
+W = 1; % TODO
+fA = 1; % TODO
 
 e1a = 22; % analysis thickness for the flanged extension
 
-n = 32; % number of bolts
+n = 20; % number of bolts
 
 tB = C/n; % Bs in ASME
 db = bolt_table.dB0(bolt_id); % assuming db = dB0; since outer is nominal, isn't it?
@@ -33,5 +38,5 @@ e = max([eA, eP]);
 
 
 %% thickness for the flanged extension
+eP1 = sqrt(3*CF*(G/4+2*b*m)*(C-G)*P/f);
 e1 = max([eA, eP1]);
-ep1 = sqrt(3*CF*(G/4+2*b*m)*(C-G)*P/f);

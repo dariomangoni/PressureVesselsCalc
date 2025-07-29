@@ -4,7 +4,7 @@ clc
 
 % Define variables
 E = 210e9;  % Replace with the value of E (D9)
-t = 3e-3;  % Replace with the value of t (D13)
+t = 4e-3;  % Replace with the value of t (D13)
 a = 1.2/2;  % Replace with the value of a (D18)
 n = 1:200;  % Replace with the value of n (B11)
 l = 0.8;  % Replace with the value of l (D7)

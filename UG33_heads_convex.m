@@ -14,7 +14,7 @@ unit_conversion;
 % Pa: maximum allowable external working pressure
 t = 4e-3 * FROM_M_TO_INCHES;
 Do = 1200e-3 * FROM_M_TO_INCHES + 2*t;
-Ro = 0.9 * Do;
+Ro = Do;
 L = Ro;
 
 % A = 0.125/(Ro/t); why this?

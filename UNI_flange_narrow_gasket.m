@@ -5,8 +5,7 @@ clc
 % Section 11.10 Full face flanges with metal to metal contact
 % refers to 11.5.2 with some modifications
 
-% A is the outside diameter of the flange or, where slotted holes extend to outside of flange, the 
-% diameter to bottom of slots; 
+% A is the outside diameter of the flange or, where slotted holes extend to outside of flange, the diameter to bottom of slots; 
 % AB is the total cross-sectional area of bolts at the section of least bolt diameter; 
 % AB,min is the total required cross-sectional area of bolts; 
 % A2 is the outside diameter of the contact face between loose and stub flanges in a lap joint, see Figure 11.5-9 (typical); 
@@ -67,58 +66,136 @@ clc
 % phi is the hub stress correction factor for integral method flange design as given in Figure 11.5-6. 
 
 MaterialS235JR;
-fH = fd;
+fH = mat.fd;
 
 bolt_table_ISO;
-bolt.Rp02 = 200;
-bolt.Rm = 300;
+bolt.Rp02 = 580;
+bolt.Rm = 830;
 
 flange_type = 'stepped-bore'; % Fig 11.5-2
 sealing_type = 'metal-to-metal';
 % sealing_type = 'narrow-face-gasket';
-assembly_type = 'bolted-dome';
+% assembly_type = 'bolted-dome';
+assembly_type = 'no-dome';
 
-y = 1.1; % the minimum gasket or joint seating pressure; see Annex H - Gasket factors m and y 
 
-gasket_diameter_mean = 1220;
-gasket_diameter_outer = 1340;
 % Rp_bolts = min([Rp02_bolts/3, Rm_bolts/4]); Sec 11.4.3.1
 % Rp_nuts = Rp02_nuts; Sec 11.4.3.1
 fB = min([bolt.Rp02/3, bolt.Rm/4]);
 fBA = fB;
 
-f = fH; % TO DO
+f = fH; % see 11.5.4.2
 nu = 0.3; %poisson
 
-B = 1200;
-C = 1250;
-A = 1350;
-w = 6;
-P = 0.3;
-m = 0.25;
-a = 20;
-n = 40; % number of bolts
-g0 = 4;
-e = 60; % tentative thickness
+
+
+% B = 800; % inside diameter of flange
+% C = 1010; % bolt pitch circle diameter
+% A = 1060; % outside diameter of the flange
+% gasket_diameter_mean = 880; % MY CHOICE
+
+% %% TENTATIVE 1
+% B = 1204; % inside diameter of flange
+% C = 1300; % bolt pitch circle diameter
+% A = 1375; % outside diameter of the flange
+% gasket_diameter_mean = 1240; % MY CHOICE
+% bolt_id_override = 30;
+
+
+% %% SINGLE-CUP INTERNAL POSPRESSURE
+% B = 1040; % inside diameter of flange
+% gasket_diameter_mean = 1065; % MY CHOICE
+% C = 1107.5; % bolt pitch circle diameter
+% A = 1150; % outside diameter of the flange
+% bolt_id_override = 23;
+% n = 24; % number of bolts
+% e = 20; % tentative thickness
+% internal_pressure = true;
+% P = 0.3; % pressure
+
+
+%% SINGLE-CUP INTERNAL POSPRESSURE SMALL
+B = 604; % inside diameter of flange
+gasket_diameter_mean = 627.5; % MY CHOICE
+C = 675; % bolt pitch circle diameter
+A = 704; % outside diameter of the flange
+bolt_id_override = 22;
+n = 20; % number of bolts
+e = 20; % tentative thickness
+internal_pressure = true;
+P = 0.3; % pressure
+
+% %% SINGLE-CUP VACUUM
+% B = 1208; % inside diameter of flange
+% gasket_diameter_mean = 1240; % MY CHOICE
+% C = 1300; % bolt pitch circle diameter
+% A = 1350; % outside diameter of the flange
+% bolt_id_override = 24;
+% n = 24; % number of bolts
+% e = 20; % tentative thickness
+% internal_pressure = false;
+% P = 0.1; % pressure
+
+
+
+% % PN2.5
+% B = 1234; % inside diameter of flange
+% C = 1320; % bolt pitch circle diameter
+% A = 1375; % outside diameter of the flange
+
+% % PN6
+% B = 1234; % inside diameter of flange
+% C = 1340; % bolt pitch circle diameter
+% A = 1405; % outside diameter of the flange
+
+gasket_diameter_outer = gasket_diameter_mean + 4; % MY CHOICE
+w = 20; % contact width of gasket (not used in metal-to-metal)
+m = 0; % gasket factor
+g0 = 4; % shell thickness
+if matches(assembly_type, 'bolted-dome')
+    a = 20; %  distance from top of flange to the mid-thickness line of the dome where it meets the flange
+    R = 0.9*B;
+end
+
+
+if ~internal_pressure
+    Mop_positive = 8.1031e+06; % see 11.5.5 Narrow face flanges subject to external pressure at final sentences
+    % Mop_positive = 0;
+end
+
+
+if ~matches(sealing_type, 'metal-to-metal')
+    y = 1.1; % the minimum gasket or joint seating pressure; see Annex H - Gasket factors m and y 
+end
+
 
 if matches(flange_type, 'stepped-bore') % WARNING: personal consideration
     g1 = 2*g0;
     h = g0; % weld height
 end
 
-R = 0.9*B;
+%% Display
+
+disp(['### Evaluating thickness: ', num2str(e), ' mm'])
+if internal_pressure
+    disp(['Internal pressure: ', num2str(P*10), ' bar'])
+else
+    disp(['External pressure: ', num2str(P*10), ' bar'])
+end
+disp(['Flange type: ', flange_type])
 
 
 %% Bolt load and areas
-b0 = w/2;
+b0 = w/2; %  eq (11.5-1) 
 assert(b0>0.9, 'Units must be millimeters.')
-if b0<=6.3
+if b0<=6.3 || matches(sealing_type, 'metal-to-metal')
     b = b0; 
     G = gasket_diameter_mean;
 else
     b = 2.52*sqrt(b0);
     G = gasket_diameter_outer - 2*b;
 end
+
 
 %% Geometry
 % hD = (C-B-g1)/2; 
@@ -151,8 +228,12 @@ end
 
 ABmin = max([WA/fBA, Wop/fB]);
 bolt_id = find(bolt_table.AB>(ABmin/n), 1, 'first');
-bolt_id = 32; 
+if bolt_id>bolt_id_override
+    error('Bolt override does not respect constraint.')
+end
+bolt_id = bolt_id_override; 
 assert(~isempty(bolt_id), 'Cannot find bolt with proper dimensions');
+assert(gasket_diameter_mean<C-bolt_table.dB0(bolt_id)/2, 'Cannot place the gasket')
 AB = n*bolt_table.AB(bolt_id);
 disp(['Bolt M', num2str(bolt_table.dB0(bolt_id)), ' [ID: ', num2str(bolt_id), ']'])
 disp(['Bolt num: ', num2str(n)])
@@ -160,13 +241,14 @@ disp(['Bolt num: ', num2str(n)])
 %% Flange Moments
 if matches(sealing_type, 'metal-to-metal')
     e_min = sqrt(6*MR/(f*(pi*C-n*bolt_table.dh(bolt_id))));
+    disp(['Minimum thickness by metal-to-metal formula: ', num2str(e_min), ' mm'])
     if e<e_min
         error(['Tentative thickness is too low. Minimum: ', num2str(e_min)])
     end
 else
 end
 
-W = 0.5*(ABmin + AB)*fBA;
+W = 0.5*(ABmin + AB)*fBA; % (11.5-16)
 
 if matches(assembly_type, 'bolted-dome')
     Hr = HD*sqrt(4*R^2-B^2)/B;
@@ -177,15 +259,24 @@ else
 end
 
 % Assembly
-MA = W*hG; % assembly conditions
-Mop = HD*hD + HT*hT + HG*hG - Hr*hr;
+% if matches(sealing_type, 'metal-to-metal')
+%     MA = 0;
+%     warning('Disabling assembly moment')
+% else
+    MA = W*hG; % assembly conditions  (11.5-17)
+% end
+if internal_pressure
+    Mop = HD*hD + HT*hT + HG*hG - Hr*hr; % (11.5-18)
+else
+    Mop = max([HD*(hD - hG) + HT*(hT - hG), Mop_positive]);
+end
 disp(['MA (total moment, assembly): ', num2str(MA/1000), ' Nm'])
 disp(['Mop (total moment, operating): ', num2str(Mop/1000), ' Nm'])
 
-%% Flange stresses
+%% Flange stresses 11.5.4.1.1
 deltab = pi*C/n;
 db = bolt_table.dB0(bolt_id); % TO VERIFY
-CF = max([1, sqrt(deltab/(2*db+6*e/(m + 0.5)))]);
+CF = max([1, sqrt(deltab/(2*db+6*e/(m + 0.5)))]); % (11.5-20)
 K = A/B;
 
 l0 = sqrt(B*g0);
@@ -204,9 +295,7 @@ betaF = betaF_struct.eval(g1/g0, h/l0, false);
 betaV = betaV_struct.eval(g1/g0, h/l0, false);
 phi = phi_struct.eval(g1/g0, h/l0, false);
 
-disp(['betaF: ', num2str(betaF)]);
-disp(['betaV: ', num2str(betaV)]);
-disp(['phi: ', num2str(phi)]);
+disp(['betaF: ', num2str(betaF), ' | betaV: ', num2str(betaV), ' | phi: ', num2str(phi)]);
 
 
 % [betaF, betaV, phi] = getFlangeParameters(g1, g0, h, l0, nu, false);
@@ -268,35 +357,23 @@ for sel = 1:2
 end
 
 
-disp(['Flange thickness: ', num2str(e), ' mm'])
-
-
 %% Figures
-figure('NumberTitle', 'off', 'Name', 'Single Bolt Loads (W)'); hold on; grid on;
-W_labels = categorical({'Assembly','Operating'});
-W_values = [WA/n, 0; H/n, HG/n];
-W_bar = bar(W_labels, W_values, 'stacked');
-xtips1 = W_bar(end).XEndPoints;
-ytips1 = W_bar(end).YEndPoints;
-labels1 = string(W_bar(1).YData) + 'N';
-text(xtips1,ytips1,labels1,'HorizontalAlignment','center',...
-    'VerticalAlignment','bottom')
-ylabel('Bolt Loads [N]')
-xlabel('Load Condition')
-
-figure('NumberTitle', 'off', 'Name', 'Flange Stresses'); hold on; grid on;
-stress_limits = [1.5*min([f, fH])/k, f/k, f/k, f/k, f/k];
-plot(stress_limits, '-ro');
-plot([sigmaH_A, sigmar_A, sigmatheta_A, 0.5*(sigmaH_A + sigmar_A), 0.5*(sigmaH_A + sigmatheta_A)], '-bx');
-plot([sigmaH_op, sigmar_op, sigmatheta_op, 0.5*(sigmaH_op + sigmar_op), 0.5*(sigmaH_op + sigmatheta_op)], '-gx');
-ylabel('Stress [MPa]')
-xlabel('Load Condition')
-set(gca, 'XTick',1:numel(stress_limits), 'xticklabel',{'Long'; 'Radial'; 'Tang'; '0.5*(Long+Radial)'; '0.5*(Long+Tang)'})
-legend('LIMITS', 'Assembly', 'Operational')
+if internal_pressure
+    figure('NumberTitle', 'off', 'Name', 'Single Bolt Loads (W)'); hold on; grid on;
+    W_labels = categorical({'Assembly','Operating'});
+    W_values = [WA/n, 0; H/n, HG/n];
+    W_bar = bar(W_labels, W_values, 'stacked');
+    xtips1 = W_bar(end).XEndPoints;
+    ytips1 = W_bar(end).YEndPoints;
+    labels1 = string(W_bar(1).YData) + 'N';
+    text(xtips1,ytips1,labels1,'HorizontalAlignment','center',...
+        'VerticalAlignment','bottom')
+    ylabel('Bolt Loads [N]')
+    xlabel('Load Condition')
+end
 
 
-
-figure('NumberTitle', 'off', 'Name', 'Flange Parameters');
+figure('NumberTitle', 'off', 'Name', 'Parameters');
 subplot(3,1,1);
 betaF_ax = betaF_struct.plot();
 plot(betaF_ax, g1/g0, betaF, 'ko');
@@ -309,6 +386,41 @@ subplot(3,1,3);
 phi_ax = phi_struct.plot();
 plot(phi_ax, g1/g0, phi, 'ko');
 title('phi')
+
+
+figure('NumberTitle', 'off', 'Name', 'Stresses'); hold on; grid on;
+stress_limits = [1.5*min([f, fH])/k, f/k, f/k, f/k, f/k];
+plot(stress_limits, '-ro');
+plot([sigmaH_A, sigmar_A, sigmatheta_A, 0.5*(sigmaH_A + sigmar_A), 0.5*(sigmaH_A + sigmatheta_A)], '-bx');
+plot([sigmaH_op, sigmar_op, sigmatheta_op, 0.5*(sigmaH_op + sigmar_op), 0.5*(sigmaH_op + sigmatheta_op)], '-gx');
+ylabel('Stress [MPa]')
+xlabel('Load Condition')
+set(gca, 'XTick',1:numel(stress_limits), 'xticklabel',{'Long'; 'Radial'; 'Tang'; '0.5*(Long+Radial)'; '0.5*(Long+Tang)'})
+legend('LIMITS', 'Assembly', 'Operational')
+
+force_scale = 1/500/n;
+eG = 3; % gasket thickness
+figure('NumberTitle', 'off', 'Name', 'Sketch'); axis equal; hold on;
+rectangle('Position', [-A/2, 0, A/2-B/2, e])
+rectangle('Position', [-C/2 - db/2, 0, db, e])
+if matches(sealing_type, 'metal-to-metal')
+    rectangle('Position', [-G/2-eG/2, -eG/2, eG, eG], 'Curvature', [1 1], 'FaceColor','k')
+    line([-A/2, -B/2], [0, 0], 'LineWidth', 2)
+else
+    rectangle('Position', [-G/2 - eG/2, -eG, w, eG], 'FaceColor','b')
+end
+if matches(flange_type, 'stepped-bore')
+    rectangle('Position', [-B/2, e/2, g0, e])
+    patch([-B/2-h, -B/2, -B/2], [e, e+h, e], [0 0 0])
+    patch([-B/2, -B/2+h, -B/2], [e/2, e/2, e/2-h], [0 0 0])
+end
+line([-C/2, -C/2], [0, e],'LineStyle','-.', 'Color', 'k')
+quiver(-C/2, e+W*force_scale, 0, -W, force_scale);
+quiver(-C/2+hG, -HG*force_scale, 0, HG, force_scale)
+quiver(-C/2+hT, -HT*force_scale, 0, HT, force_scale)
+quiver(-B/2*0.95, -H*force_scale, 0, H, force_scale)
+
+
 
 
 
